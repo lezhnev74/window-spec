@@ -109,6 +109,7 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 			err = r.fail("")
 			return
 		}
+		r.spec.validate()
 		nextState = STATE_FINISH
 	default:
 		err = fmt.Errorf("unexpected state %d", state)
@@ -134,24 +135,8 @@ func (r *Recognizer) fail(customMsg string) error {
 }
 
 func (r *Recognizer) mapDurationUnit(unit string) (d time.Duration, err error) {
-	switch unit {
-	case "nanosecond", "nanoseconds":
-		d = time.Nanosecond
-	case "microsecond", "microseconds":
-		d = time.Microsecond
-	case "millisecond", "milliseconds":
-		d = time.Millisecond
-	case "second", "seconds":
-		d = time.Second
-	case "minute", "minutes":
-		d = time.Minute
-	case "hour", "hours":
-		d = time.Hour
-	case "day", "days":
-		d = time.Hour * 24
-	case "week", "weeks":
-		d = time.Hour * 24 * 7
-	default:
+	d = MapUnitToDuration(unit)
+	if d == 0 {
 		err = fmt.Errorf("unsupported unit %s in relative bound", unit)
 	}
 	return

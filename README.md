@@ -1,5 +1,6 @@
 notes:
-  - allow to use any delimiters (from, since), (to, until)
+- if abs time recognition fail?
+- add more tests for window building
 
 # Window Language Parser (in Go)
 
@@ -15,7 +16,9 @@ Summarize of window bounds:
 - absolute bound (ex: `9:00 am, 22 June, 2022`)
 - relative to the other bound (ex: `6 days BEFORE 1 September 2022`)
 - relative to now (ex: `1 may 1992 TO today`)
-  Keywords allowed before every type:
+
+Keywords allowed before every type:
+
 <table>
   <thead>
     <tr>
@@ -27,25 +30,23 @@ Summarize of window bounds:
   </thead>
   <tr>
     <td>Absolute</td>
-    <td><code>FROM</code></td>
-    <td><code>TO, BEFORE</code></td>
+    <td rowspan="2"><code>FROM, SINCE</code></td>
+    <td rowspan="2"><code>TO, BEFORE, UNTIL</code></td>
     <td>Many formats are supported, see <a href="https://github.com/araddon/dateparse">araddon/dateparse</a></td>
+  </tr>
+  <tr>
+    <td>Relative To Now</td>
+    <td>
+      <code>x AGO</code> or <code>x LATER</code> where "x" is a combination of <code>number unit (and number unit)*</code>
+      <br> units: nanosecond, microsecond, millisecond, second, minute, hour, day, week, month
+      <br> Also possible more sophisitcated queries: <code>last X</code> (last year)
+    </td>
   </tr>
   <tr>
     <td>Relative To Another Bound</td>
     <td><code>WITHIN</code></td>
     <td><code>WITHIN</code></td>
     <td><code>number unit (and number unit)*</code></td>
-  </tr>
-  <tr>
-    <td>Relative To Now</td>
-    <td><code>SINCE</code></td>
-    <td><code>UNTIL</code></td>
-    <td>
-      <code>x AGO</code> or <code>x LATER</code> where "x" is a combination of <code>number unit (and number unit)*</code>
-      <br> units: nanosecond, microsecond, millisecond, second, minute, hour, day, week, month
-      <br> Also possible more sophisitcated queries: <code>last X</code> (last year)
-    </td>
   </tr>
 </table>
 
@@ -143,8 +144,8 @@ Window bound relative to Now:
   is used one of the bounds is picked as a result. Consider this spec `FROM last week UNTIL yesterday`. "Last week" is
   used in the left bound definition, so the left bound of the "last week" is picked as a bound. Contrary "yesterday"
   also has two bounds and the right bound is assumed as a result of evaluation.
-
 ## How To Use
+
 This is a go package so the usage if straightforward:
 ```
 aaa
