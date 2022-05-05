@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/araddon/dateparse"
 )
 
 func Test_recognitionFail(t *testing.T) {
@@ -13,13 +15,13 @@ func Test_recognitionFail(t *testing.T) {
 		err  string
 	}
 	tests := []test{
-		{"", "unexpected eof"},
-		{"a", "unexpected character found at 0"},
-		{"WITHIN", "unexpected eof"},
-		{"WITHIN one day", "unexpected character found at 7"},
-		{"WITHIN 1 2d", "unexpected character found at 9"},
-		{"WITHIN 1", "unexpected eof"},
-		{"3 days max", "unexpected character found at 7"},
+		{"", "failed to recognize the left bound"},
+		{"a", "failed to recognize the left bound"},
+		{"WITHIN", "failed to recognize the left bound"},
+		{"WITHIN one day", "failed to recognize the left bound"},
+		{"WITHIN 1 2d", "failed to recognize the left bound"},
+		{"WITHIN 1", "failed to recognize the left bound"},
+		{"3 days max", "failed to recognize the right bound"},
 	}
 
 	for i, tt := range tests {
@@ -39,22 +41,64 @@ func Test_recognitionFail(t *testing.T) {
 
 func Test_recognitionSuccess(t *testing.T) {
 	type test struct {
-		text   string
-		window Specification
+		text       string
+		windowFunc func() Specification
 	}
 	tests := []test{
-		{"3 days", MakeSpecification(3*24*time.Hour, nil)},
-		{"Within 3 days", MakeSpecification(3*24*time.Hour, nil)},
-		{"3 days until yesterday", MakeSpecification(3*24*time.Hour, boundRelativeToNow{verbal: "yesterday"})},
-		{"3 days until last year", MakeSpecification(3*24*time.Hour, boundRelativeToNow{inFuture: false, verbal: "year"})},
-		{"30 days until 2 days ago", MakeSpecification(
-			30*24*time.Hour,
-			boundRelativeToNow{inFuture: false, duration: 2 * 24 * time.Hour},
-		)},
-		{"from last month until 2 hours later", MakeSpecification(
-			boundRelativeToNow{inFuture: false, verbal: "month"},
-			boundRelativeToNow{inFuture: true, duration: 2 * time.Hour},
-		)},
+		// 1. Abs-Abs
+		{"1 Jan 1991 to 2 Feb 1992", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Jan 1991")
+			d2, _ := dateparse.ParseStrict("2 Feb 1992")
+			return MakeSpecification(d1, d2)
+		}},
+		// 2. Abs-Rel
+		{"1 Jan 1991 within 1 day", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Jan 1991")
+			return MakeSpecification(d1, 1*24*time.Hour)
+		}},
+		// 3. Abs-RelN
+		{"1 Jan 1991 to last week", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Jan 1991")
+			return MakeSpecification(d1, boundRelativeToNow{inFuture: false, verbal: "week"})
+		}},
+		{"1 Jan 1991 to 1 day ahead", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Jan 1991")
+			return MakeSpecification(d1, boundRelativeToNow{inFuture: true, duration: 24 * time.Hour})
+		}},
+		{"1 Jan 1991 until now", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Jan 1991")
+			return MakeSpecification(d1, boundRelativeToNow{verbal: "now"})
+		}},
+		// 4. Rel-Abs
+		// 5. Rel-Rel (Sliding window)
+		{"3 days", func() Specification {
+			return MakeSpecification(3*24*time.Hour, nil)
+		}},
+		{"Within 3 days", func() Specification {
+			return MakeSpecification(3*24*time.Hour, nil)
+		}},
+		// 6. Rel-RelN
+		{"3 days until yesterday", func() Specification {
+			return MakeSpecification(3*24*time.Hour, boundRelativeToNow{verbal: "yesterday"})
+		}},
+		{"3 days until last year", func() Specification {
+			return MakeSpecification(3*24*time.Hour, boundRelativeToNow{inFuture: false, verbal: "year"})
+		}},
+		{"30 days until 2 days ago", func() Specification {
+			return MakeSpecification(
+				30*24*time.Hour,
+				boundRelativeToNow{inFuture: false, duration: 2 * 24 * time.Hour},
+			)
+		}},
+		// 7. RelN-Abs
+		// 8. RelN-Rel
+		// 9. RelN-RelN
+		{"from last month until 2 hours later", func() Specification {
+			return MakeSpecification(
+				boundRelativeToNow{inFuture: false, verbal: "month"},
+				boundRelativeToNow{inFuture: true, duration: 2 * time.Hour},
+			)
+		}},
 	}
 
 	for i, tt := range tests {
@@ -63,8 +107,8 @@ func Test_recognitionSuccess(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			if !reflect.DeepEqual(win, tt.window) {
-				t.Errorf("window [%v] should be [%v]", win, tt.window)
+			if !reflect.DeepEqual(win, tt.windowFunc()) {
+				t.Errorf("window [%v] should be [%v]", win, tt.windowFunc())
 			}
 		})
 

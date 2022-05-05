@@ -84,15 +84,11 @@ func (p *Parser) eatWs() (eaten int) {
 	return
 }
 
-func (p *Parser) getRemainder() string {
-	return p.text[p.pos:]
-}
+func (p *Parser) getRemainder() string { return p.text[p.pos:] }
 
 // rollback reset the pos back to i steps
-func (p *Parser) rollback(i int) {
-	p.pos -= i
-}
+func (p *Parser) rollback(i int) { p.pos -= i }
 
-func (p *Parser) isEof() bool {
-	return p.pos >= len(p.text)
-}
+func (p *Parser) rollbackAt(pos int) { p.pos = pos }
+
+func (p *Parser) isEof() bool { return p.pos >= len(p.text) }

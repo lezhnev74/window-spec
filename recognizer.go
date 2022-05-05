@@ -5,19 +5,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/araddon/dateparse"
 )
 
 const (
-	STATE_LEFT_BOUND       = iota // parse left bound
-	STATE_LEFT_BOUND_ABS          // expect absolute value
-	STATE_LEFT_BOUND_REL          // expect value relative to right bound
-	STATE_LEFT_BOUND_RELN         // expect bound relative to NOW
-	STATE_RIGHT_BOUND             // parse right bound
-	STATE_RIGHT_BOUND_ABS         // expect absolute value
-	STATE_RIGHT_BOUND_REL         // expect value relative to left bound
-	STATE_RIGHT_BOUND_RELN        // expect bound relative to NOW
-	STATE_VALIDATE                // parsing is over, validate the result
-	STATE_FINISH                  // all is good, stop the parsing
+	STATE_LEFT_BOUND  = iota // parse left bound
+	STATE_RIGHT_BOUND        // parse right bound
+	STATE_VALIDATE           // parsing is over, validate the result
+	STATE_FINISH             // all is good, stop the parsing
 )
 
 type Recognizer struct {
@@ -30,60 +26,84 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 	switch state {
 	case STATE_LEFT_BOUND: // start here
 		// skip keywords
-		leftBoundDelim := r.p.expectAny([]string{"from", "since", "within"})
-		// find left bound text
-		leftBoundText, rightBoundDelim := r.p.consumeUntil([]string{"to", "until", "within"})
-
-		// try
-		if r.p.expect("from") {
-			nextState = STATE_LEFT_BOUND_ABS
-			return
-		}
-		if r.p.expect("since") {
-			nextState = STATE_LEFT_BOUND_RELN
-			return
-		}
-		nextState = STATE_LEFT_BOUND_REL
-
-	case STATE_LEFT_BOUND_REL:
-		r.p.expect("within") // skip if present
+		r.p.expectAny([]string{"from", "since", "within"})
 		r.p.eatWs()
-		duration, durationErr := r.parseDuration()
-		if durationErr != nil {
-			err = durationErr
-			return
-		}
-		r.spec.leftBoundRel = &duration
-		nextState = STATE_RIGHT_BOUND
 
-	case STATE_LEFT_BOUND_RELN:
-		relnBound, boundErr := r.parseRelnBound()
-		if boundErr != nil {
-			err = r.fail(boundErr.Error())
+		// Try 1: RelN spec
+		oldPos := r.p.pos
+		bound, parseErr := r.parseRelnBound()
+		if parseErr == nil {
+			r.spec.leftBoundRelN = &bound
+			nextState = STATE_RIGHT_BOUND
 			return
 		}
-		r.spec.leftBoundRelN = &relnBound
-		nextState = STATE_VALIDATE
+		r.p.rollbackAt(oldPos)
+
+		// Try 2: Rel spec
+		oldPos = r.p.pos
+		duration, parseErr := r.parseRelBound()
+		if parseErr == nil {
+			r.spec.leftBoundRel = &duration
+			nextState = STATE_RIGHT_BOUND
+			return
+		}
+		r.p.rollbackAt(oldPos)
+
+		// Try 3: anything else should be treated as Abs spec
+		oldPos = r.p.pos
+		leftBoundText, _ := r.p.consumeUntil([]string{" to", "until", "within"})
+		absTime, absErr := dateparse.ParseStrict(leftBoundText)
+		if absErr == nil {
+			r.spec.leftBoundAbs = &absTime
+			nextState = STATE_RIGHT_BOUND
+			return
+		}
+		r.p.rollbackAt(oldPos)
+
+		err = fmt.Errorf("failed to recognize the left bound")
+		return
 
 	case STATE_RIGHT_BOUND:
-		if r.p.isEof() {
-			// case sliding-window
+		if r.p.isEof() { // sliding window case
 			nextState = STATE_VALIDATE
 			return
 		}
-		if r.p.expect("until") {
-			nextState = STATE_RIGHT_BOUND_RELN
+
+		r.p.expectAny([]string{"until", " to"})
+		r.p.eatWs()
+
+		// Try 1: RelN spec
+		oldPos := r.p.pos
+		bound, parseErr := r.parseRelnBound()
+		if parseErr == nil {
+			r.spec.rightBoundRelN = &bound
+			nextState = STATE_VALIDATE
 			return
 		}
-		err = r.fail("") // should not get here
-	case STATE_RIGHT_BOUND_RELN:
-		relnBound, boundErr := r.parseRelnBound()
-		if boundErr != nil {
-			err = r.fail(boundErr.Error())
+		r.p.rollbackAt(oldPos)
+
+		// Try 2: Rel spec
+		oldPos = r.p.pos
+		duration, parseErr := r.parseRelBound()
+		if parseErr == nil {
+			r.spec.rightBoundRel = &duration
+			nextState = STATE_VALIDATE
 			return
 		}
-		r.spec.rightBoundRelN = &relnBound
-		nextState = STATE_VALIDATE
+		r.p.rollbackAt(oldPos)
+
+		// Try 3: anything else should be treated as Abs spec
+		rightBoundText, _ := r.p.consumeUntil([]string{" to", "until", "within"})
+		absTime, absErr := dateparse.ParseStrict(rightBoundText)
+		if absErr == nil {
+			r.spec.rightBoundAbs = &absTime
+			nextState = STATE_VALIDATE
+			return
+		}
+
+		err = fmt.Errorf("failed to recognize the right bound")
+		return
+
 	case STATE_VALIDATE:
 		if !r.p.isEof() { // at this point there should be nothing left in the string
 			err = r.fail("")
@@ -100,15 +120,10 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 
 func (r *Recognizer) fail(customMsg string) error {
 
-	// Edge-case: eof found
-	if r.p.isEof() {
-		return fmt.Errorf("unexpected eof")
-	}
-
 	// Normal case:
 	msg := fmt.Sprintf("unexpected character found at %d", r.p.pos)
 	if customMsg != "" {
-		msg += ":" + customMsg
+		msg += ": " + customMsg
 	}
 	if len(r.p.text) > 0 {
 		visualPlacement := fmt.Sprintf("\n%s\n%s^", r.p.text, strings.Repeat(" ", r.p.pos))
@@ -120,21 +135,21 @@ func (r *Recognizer) fail(customMsg string) error {
 
 func (r *Recognizer) mapDurationUnit(unit string) (d time.Duration, err error) {
 	switch unit {
-	case "nanoseconds":
+	case "nanosecond", "nanoseconds":
 		d = time.Nanosecond
-	case "microseconds":
+	case "microsecond", "microseconds":
 		d = time.Microsecond
-	case "milliseconds":
+	case "millisecond", "milliseconds":
 		d = time.Millisecond
-	case "seconds":
+	case "second", "seconds":
 		d = time.Second
-	case "minutes":
+	case "minute", "minutes":
 		d = time.Minute
-	case "hours":
+	case "hour", "hours":
 		d = time.Hour
-	case "days":
+	case "day", "days":
 		d = time.Hour * 24
-	case "weeks":
+	case "week", "weeks":
 		d = time.Hour * 24 * 7
 	default:
 		err = fmt.Errorf("unsupported unit %s in relative bound", unit)
@@ -142,8 +157,8 @@ func (r *Recognizer) mapDurationUnit(unit string) (d time.Duration, err error) {
 	return
 }
 
-// parseDuration check the current text and parses strings like "1 day" or "2 minutes and 3 seconds"
-func (r *Recognizer) parseDuration() (d time.Duration, err error) {
+// parseRelBound check the current text and parses strings like "1 day" or "2 minutes and 3 seconds"
+func (r *Recognizer) parseRelBound() (d time.Duration, err error) {
 	// parse num
 	num := r.p.consumeRE(`\d+`)
 	if num == "" {
@@ -202,17 +217,17 @@ func (r *Recognizer) parseRelnBound() (bound boundRelativeToNow, err error) {
 	}
 
 	// check intervals "X Y ago" or "X Y after"
-	duration, durationErr := r.parseDuration()
+	duration, durationErr := r.parseRelBound()
 	if durationErr == nil {
 		r.p.eatWs()
-		keywords := []string{"ago", "after"}
+		keywords := []string{"ago", "before", "after", "later", "ahead"}
 		keyword := r.p.expectAny(keywords)
 		if keyword == "" {
 			err = r.fail("expected ago or after at this point")
 			return
 		}
 		inFuture := false
-		if keyword == "after" {
+		if keyword == "after" || keyword == "later" || keyword == "ahead" {
 			inFuture = true
 		}
 

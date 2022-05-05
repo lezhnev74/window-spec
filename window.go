@@ -11,6 +11,7 @@ func GetPeriodWords() []string {
 		"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 		"january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
 		"nanosecond", "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "month", "year",
+		"nanoseconds", "microseconds", "milliseconds", "seconds", "minutes", "hour", "days", "weeks", "months", "years",
 	}
 }
 
