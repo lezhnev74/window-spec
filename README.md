@@ -1,7 +1,3 @@
-notes:
-- if abs time recognition fail?
-- add more tests for window building
-
 # Window Language Parser (in Go)
 
 A window is a term from the time series domain. It is a period of time.
@@ -147,6 +143,4 @@ Window bound relative to Now:
 ## How To Use
 
 This is a go package so the usage if straightforward:
-```
-aaa
-```
+TODO
