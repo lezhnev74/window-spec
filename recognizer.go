@@ -52,6 +52,7 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 		// Try 3: anything else should be treated as Abs spec
 		oldPos = r.p.pos
 		leftBoundText, _ := r.p.consumeUntil([]string{" to", "until", "within"})
+		leftBoundText = strings.Trim(leftBoundText, " \n\t")
 		absTime, absErr := dateparse.ParseStrict(leftBoundText)
 		if absErr == nil {
 			r.spec.leftBoundAbs = &absTime
@@ -69,7 +70,7 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 			return
 		}
 
-		r.p.expectAny([]string{"until", "to", "within"})
+		r.p.expectAny([]string{"until", "to ", "within"})
 		r.p.eatWs()
 
 		// Try 1: RelN spec
@@ -94,6 +95,7 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 
 		// Try 3: anything else should be treated as Abs spec
 		remainingText, _ := r.p.consumeUntil([]string{})
+		remainingText = strings.Trim(remainingText, " \n\t")
 		absTime, absErr := dateparse.ParseStrict(remainingText)
 		if absErr == nil {
 			r.spec.rightBoundAbs = &absTime

@@ -22,6 +22,8 @@ func Test_recognitionFail(t *testing.T) {
 		{"WITHIN 1 2d", "failed to recognize the left bound"},
 		{"WITHIN 1", "failed to recognize the left bound"},
 		{"3 days max", "failed to recognize the right bound"},
+		{"1 April 2022 to", "failed to recognize the right bound"},
+		{"1 April 2022 to ", "failed to recognize the right bound"},
 	}
 
 	for i, tt := range tests {
@@ -56,7 +58,15 @@ func Test_recognitionSuccess(t *testing.T) {
 			d1, _ := dateparse.ParseStrict("1 Jan 1991")
 			return MakeSpecification(d1, 1*24*time.Hour)
 		}},
+		{"1 April 2022 within 1 day", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Apr 2022")
+			return MakeSpecification(d1, 1*24*time.Hour)
+		}},
 		// 3. Abs-RelN
+		{"1 April 2022 to tomorrow", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Apr 2022")
+			return MakeSpecification(d1, boundRelativeToNow{verbal: "tomorrow"})
+		}},
 		{"1 Jan 1991 to last week", func() Specification {
 			d1, _ := dateparse.ParseStrict("1 Jan 1991")
 			return MakeSpecification(d1, boundRelativeToNow{inFuture: false, verbal: "week"})

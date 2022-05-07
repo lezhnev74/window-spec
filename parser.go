@@ -44,7 +44,6 @@ func (p *Parser) consumeUntil(alts []string) (consumed, matchedAlt string) {
 	for p.pos < len(p.text) {
 		for _, alt := range alts {
 			if len(alt) <= len(p.text[p.pos:]) && alt == p.text[p.pos:p.pos+len(alt)] {
-				p.pos += len(alt)
 				matchedAlt = alt
 				return
 			}

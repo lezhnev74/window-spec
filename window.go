@@ -51,25 +51,91 @@ type boundRelativeToNow struct {
 	duration time.Duration // "2 days", "1 second"
 }
 
-// resolveAt map the relN bound to time. It uses isFuture flag to understand which bound of the interval to pick.
+// resolveAt map the relN bound to time. It uses isFuture/isLeftBound to understand which bound of the interval to pick.
 // -----[last year]------[NOW]------[next year]----
 //      ^		  ^					^		  ^   <---- possible picks depending on isLeftBound and isFuture
 func (b *boundRelativeToNow) resolveAt(n time.Time, isLeftBound bool) time.Time {
 	layout := "2006-01-02 15:04:05.000000000 MST"
-	locationOffset := n.Format("MST")
+	tz := n.Format("MST")
 	var leftBoundString, rightBoundString string
 
 	// verbal map
 	if b.verbal != "" {
+		sign := -1
+		if b.inFuture {
+			sign = 1
+		}
+
 		switch b.verbal {
 		case "now":
 			return n
 		case "tomorrow":
 			tomorrowString := n.AddDate(0, 0, 1).Format("2006-01-02")
-			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", tomorrowString, locationOffset)
-			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", tomorrowString, locationOffset)
+			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", tomorrowString, tz)
+			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", tomorrowString, tz)
+		case "yesterday":
+			tomorrowString := n.AddDate(0, 0, -1).Format("2006-01-02")
+			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", tomorrowString, tz)
+			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", tomorrowString, tz)
+		case "nanosecond", "nanoseconds":
+			nanosecondString := n.Add(time.Duration(sign) * time.Nanosecond).Format("2006-01-02 15:04:05.999999999")
+			leftBoundString = fmt.Sprintf("%s %s", nanosecondString, tz)
+			rightBoundString = fmt.Sprintf("%s %s", nanosecondString, tz)
+		case "microsecond", "microseconds":
+			microsecondString := n.Add(time.Duration(sign) * time.Microsecond).Format("2006-01-02 15:04:05.999999")
+			leftBoundString = fmt.Sprintf("%s000 %s", microsecondString, tz)
+			rightBoundString = fmt.Sprintf("%s999 %s", microsecondString, tz)
+		case "millisecond", "milliseconds":
+			millisecondString := n.Add(time.Duration(sign) * time.Millisecond).Format("2006-01-02 15:04:05.999")
+			leftBoundString = fmt.Sprintf("%s000000 %s", millisecondString, tz)
+			rightBoundString = fmt.Sprintf("%s999999 %s", millisecondString, tz)
+		case "second", "seconds":
+			secondString := n.Add(time.Duration(sign) * time.Second).Format("2006-01-02 15:04:05")
+			leftBoundString = fmt.Sprintf("%s.000000000 %s", secondString, tz)
+			rightBoundString = fmt.Sprintf("%s.999999999 %s", secondString, tz)
+		case "minute", "minutes":
+			minuteString := n.Add(time.Duration(sign) * time.Minute).Format("2006-01-02 15:04")
+			leftBoundString = fmt.Sprintf("%s:00.000000000 %s", minuteString, tz)
+			rightBoundString = fmt.Sprintf("%s:59.999999999 %s", minuteString, tz)
+		case "hour", "hours":
+			hourString := n.Add(time.Duration(sign) * time.Hour).Format("2006-01-02 15")
+			leftBoundString = fmt.Sprintf("%s:00:00.000000000 %s", hourString, tz)
+			rightBoundString = fmt.Sprintf("%s:59:59.999999999 %s", hourString, tz)
+		case "day", "days":
+			dayString := n.AddDate(0, 0, sign*1).Format("2006-01-02")
+			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", dayString, tz)
+			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", dayString, tz)
+		case "week", "weeks":
+			var nextMonday time.Time
+			switch n.Weekday() {
+			case time.Monday:
+				nextMonday = n.AddDate(0, 0, 7)
+			case time.Tuesday:
+				nextMonday = n.AddDate(0, 0, 6)
+			case time.Wednesday:
+				nextMonday = n.AddDate(0, 0, 5)
+			case time.Thursday:
+				nextMonday = n.AddDate(0, 0, 4)
+			case time.Friday:
+				nextMonday = n.AddDate(0, 0, 3)
+			case time.Saturday:
+				nextMonday = n.AddDate(0, 0, 2)
+			case time.Sunday:
+				nextMonday = n.AddDate(0, 0, 1)
+			}
+			mondayString := nextMonday.Format("2006-01-02")
+			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", mondayString, tz)
+			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", mondayString, tz)
+		case "month", "months":
+			monthString := n.AddDate(0, sign*1, 0).Format("2006-01")
+			leftBoundString = fmt.Sprintf("%s-01  00:00:00.000000000 %s", monthString, tz)
+			rightBoundString = fmt.Sprintf("%s-01 23:59:59.999999999 %s", monthString, tz)
+		case "year", "years":
+			yearString := n.AddDate(sign*1, 0, 0).Format("2006")
+			leftBoundString = fmt.Sprintf("%s-01-01  00:00:00.000000000 %s", yearString, tz)
+			rightBoundString = fmt.Sprintf("%s-01-01 23:59:59.999999999 %s", yearString, tz)
 		default:
-			panic(fmt.Errorf("vrbal [%s] not recognized", b.verbal))
+			panic(fmt.Errorf("verbal [%s] not recognized", b.verbal))
 		}
 	}
 
@@ -139,9 +205,16 @@ func (s *Specification) ResolveAt(t time.Time) *Window {
 	} else if s.rightBoundRel != nil {
 		rt := w.from.Add(*s.rightBoundRel)
 		w.to = &rt
-	} else {
+	} else if s.rightBoundRelN != nil {
 		rt := s.rightBoundRelN.resolveAt(t, false)
 		w.to = &rt
+	}
+
+	// edge-case: left bound is a Rel and the right is an Abs, so calculate the left bound abs value relative to the right bound abs value
+	if s.leftBoundRel != nil && w.to != nil {
+		lt := w.to.Add(-*s.leftBoundRel)
+		w.from = &lt
+		w.slide = 0 // reset the slide
 	}
 
 	return &w
