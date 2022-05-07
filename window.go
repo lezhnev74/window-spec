@@ -239,6 +239,7 @@ func (s *Specification) ResolveAt(t time.Time) *Window {
 		w.slide = 0 // reset the slide
 	}
 
+	w.validate()
 	return &w
 }
 
@@ -269,4 +270,14 @@ func (w *Window) IsSliding() bool {
 // GetSlide return duration of a sliding window
 func (w *Window) GetSlide() time.Duration {
 	return w.slide
+}
+
+func (w *Window) validate() {
+	if w.from != nil && w.to != nil && w.from.After(*w.to) {
+		panic(fmt.Errorf("window bounds are in wrong order"))
+	}
+
+	if w.from == nil && w.to == nil && w.slide == 0 {
+		panic("empty window")
+	}
 }

@@ -10,7 +10,7 @@ Run a tool from `window` folder to try recognition of your input, here are a few
 ```shell
 $ go run main.go "within 30 days and 2 minutes and 3 nanoseconds"
 Window resolved at:     2022-05-07, 17:36:53.163478476 +05
-You defined a sliding window of 30 day(s) 2 minute(s) 0.000000003 seconds(s)% 
+You defined a sliding window of 30 day(s) 2 minute(s) 0.000000003 seconds(s) 
 
 $ go run main.go --timezone="Europe/Moscow" "from yesterday to today"
 Your Using time.Local set to location=Europe/Moscow MSK 
@@ -54,9 +54,9 @@ Supported window bound types:
   <tr>
     <td>Relative To Now</td>
     <td>
-      <code>x AGO</code> or <code>x LATER</code> where "x" is a combination of <code>number unit (and number unit)*</code>
+      <code>x AGO/BEFORE/</code> or <code>x LATER/AFTER/AHEAD</code> where "x" is a combination of <code>number unit (and number unit)*</code>
       <br> units: nanosecond, microsecond, millisecond, second, minute, hour, day, week, month
-      <br> Also possible more sophisitcated queries: <code>last X</code> (last year)
+      <br> Also possible more sophisitcated queries: <code>last X</code> or <code>next Y</code>
     </td>
   </tr>
   <tr>
@@ -162,7 +162,13 @@ Combining these types we can specify a window in 9 ways:
     <tr>
         <td>Relative To Now</td>
         <td>Relative To Another Bound</td>
-        <td><code>FROM 7 years ago UNTIL last week</code></td>
+        <td>
+          <code>FROM 7 years ago UNTIL last week</code>
+          <br>
+          <code>2 days ago TO next week</code>
+          <br>
+          <code>FROM next week TO 7 days LATER</code>
+        </td>
     </tr>
     <tr>
         <td>Relative To Now</td>
