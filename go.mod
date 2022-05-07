@@ -1,4 +1,4 @@
-module window
+module github.com/lezhnev74/window-spec
 
 go 1.18
 

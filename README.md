@@ -174,6 +174,8 @@ Combining these types we can specify a window in 9 ways:
 ## How To Use
 
 ```go
+// go get github.com/lezhnev74/window-spec
+
 windowQuery := "30 days"
 winSpec, err := Start(windowQuery) // convert the text to a specification data structure
 if err != nil {

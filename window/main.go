@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"window"
+	"github.com/lezhnev74/window-spec"
 )
 
 var (
