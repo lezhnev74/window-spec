@@ -173,4 +173,11 @@ Combining these types we can specify a window in 9 ways:
 
 ## How To Use
 
-TODO
+```go
+windowQuery := "30 days"
+winSpec, err := Start(windowQuery) // convert the text to a specification data structure
+if err != nil {
+    fatal(err)
+}
+w := winSpec.ResolveAt(time.Now()) // resolve specification relatively to a given time 
+```
