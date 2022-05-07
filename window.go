@@ -127,13 +127,31 @@ func (b *boundRelativeToNow) resolveAt(n time.Time, isLeftBound bool) time.Time 
 			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", mondayString, tz)
 			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", mondayString, tz)
 		case "month", "months":
+			daysInMonth := map[string]uint8{
+				"1":  30,
+				"2":  31,
+				"3":  30,
+				"4":  31,
+				"5":  30,
+				"6":  31,
+				"7":  30,
+				"8":  31,
+				"9":  30,
+				"10": 31,
+				"11": 30,
+				"12": 31,
+			}
+
+			d := n.AddDate(0, sign*1, 0)
+			days := daysInMonth[d.Format("M")]
 			monthString := n.AddDate(0, sign*1, 0).Format("2006-01")
+
 			leftBoundString = fmt.Sprintf("%s-01  00:00:00.000000000 %s", monthString, tz)
-			rightBoundString = fmt.Sprintf("%s-01 23:59:59.999999999 %s", monthString, tz)
+			rightBoundString = fmt.Sprintf("%s-%d 23:59:59.999999999 %s", monthString, days, tz)
 		case "year", "years":
 			yearString := n.AddDate(sign*1, 0, 0).Format("2006")
 			leftBoundString = fmt.Sprintf("%s-01-01  00:00:00.000000000 %s", yearString, tz)
-			rightBoundString = fmt.Sprintf("%s-01-01 23:59:59.999999999 %s", yearString, tz)
+			rightBoundString = fmt.Sprintf("%s-12-31 23:59:59.999999999 %s", yearString, tz)
 		default:
 			panic(fmt.Errorf("verbal [%s] not recognized", b.verbal))
 		}

@@ -67,7 +67,17 @@ func Test(t *testing.T) {
 			return Window{from: &d1, to: &d2}
 		}},
 		// 7. RelN-Abs
+		{"next year to 20 May 2024", func() Window {
+			d1 := dateparse.MustParse("31 Dec 2023 23:59:59.999999999")
+			d2 := dateparse.MustParse("20 May 2024 00:00:00.000000000")
+			return Window{from: &d1, to: &d2}
+		}},
 		// 8. RelN-Rel
+		{"next year within 3 days and 2 hours", func() Window {
+			d1 := dateparse.MustParse("31 Dec 2023 23:59:59.999999999")
+			d2 := dateparse.MustParse("4 Jan 2024 01:59:59.999999999")
+			return Window{from: &d1, to: &d2}
+		}},
 		// 9. RelN-RelN
 		{"last hour to next minute", func() Window {
 			d1 := dateparse.MustParse("30 Apr 2022 23:59:59.999999999")

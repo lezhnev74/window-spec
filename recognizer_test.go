@@ -113,6 +113,9 @@ func Test_recognitionSuccess(t *testing.T) {
 		{"yesterday within 30 days", func() Specification {
 			return MakeSpecification(boundRelativeToNow{verbal: "yesterday"}, 30*24*time.Hour)
 		}},
+		{"next year within 3 days and 2 hours", func() Specification {
+			return MakeSpecification(boundRelativeToNow{inFuture: true, verbal: "year"}, 3*24*time.Hour+2*time.Hour)
+		}},
 		// 9. RelN-RelN
 		{"from last month until 2 hours later", func() Specification {
 			return MakeSpecification(

@@ -146,6 +146,7 @@ func (r *Recognizer) mapDurationUnit(unit string) (d time.Duration, err error) {
 
 // parseRelBound check the current text and parses strings like "1 day" or "2 minutes and 3 seconds"
 func (r *Recognizer) parseRelBound() (d time.Duration, err error) {
+	r.p.eatWs()
 	// parse num
 	num := r.p.consumeRE(`\d+`)
 	if num == "" {
@@ -173,6 +174,20 @@ func (r *Recognizer) parseRelBound() (d time.Duration, err error) {
 		return
 	}
 	d = unitDuration * time.Duration(n)
+
+	// check for more "and X Y..."
+	r.p.eatWs()
+	if r.p.expect("and") {
+		curPos := r.p.pos
+		extraDuration, extraErr := r.parseRelBound()
+		if err != nil {
+			r.p.rollbackAt(curPos)
+			err = r.fail(extraErr.Error())
+			return
+		}
+		d = d + extraDuration
+	}
+
 	return
 }
 
