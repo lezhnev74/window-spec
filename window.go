@@ -69,6 +69,10 @@ func (b *boundRelativeToNow) resolveAt(n time.Time, isLeftBound bool) time.Time 
 		switch b.verbal {
 		case "now":
 			return n
+		case "today":
+			tomorrowString := n.Format("2006-01-02")
+			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", tomorrowString, tz)
+			rightBoundString = fmt.Sprintf("%s 23:59:59.999999999 %s", tomorrowString, tz)
 		case "tomorrow":
 			tomorrowString := n.AddDate(0, 0, 1).Format("2006-01-02")
 			leftBoundString = fmt.Sprintf("%s  00:00:00.000000000 %s", tomorrowString, tz)
@@ -251,6 +255,9 @@ type Window struct {
 
 // GetBounds return absolute times as left and right bound of the window
 func (w *Window) GetBounds() (from, to time.Time) {
+	if w.from == nil || w.to == nil {
+		panic("absolute bound are not defined on this window")
+	}
 	return *w.from, *w.to
 }
 

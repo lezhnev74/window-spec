@@ -3,20 +3,32 @@
 A window is a term from the time series domain. It is a period of time.
 This package allows to define windows in plain text and then convert them to Go structures.
 
-Examples:
-- `A`
-- `B`
-- `C`
+## Playground
+Run a tool from `window` folder to try recognition of your input, here are a few examples:
+```
+$ go run main.go "within 30 days and 2 minutes and 3 nanoseconds"
+Window resolved at:     2022-05-07, 17:36:53.163478476 +05
+You defined a sliding window of 30 day(s) 2 minute(s) 0.000000003 seconds(s)% 
+
+$ go run main.go --timezone="Europe/Moscow" "from yesterday to today"
+Your Using time.Local set to location=Europe/Moscow MSK 
+Window resolved at:     2022-05-07, 15:38:50.736614500 MSK
+Left Bound:             2022-05-06, 23:59:59.999999999 MSK
+Right Bound:            2022-05-07, 00:00:00.000000000 MSK
+```
 
 ## How To Define A Window
 
 A windows can be defined by its left and right bounds. `W: (a,b)`. Bounds are time points (as precise as we want). This
 package does not distinguish included/excluded bounds. A time point can be absolute or relative. Relative to what? There
 are two options: relative to the other point or to the NOW point.
+
 Summarize of window bounds:
-- absolute bound (ex: `9:00 am, 22 June, 2022`)
+- absolute bound (ex: `9:00 am 22 June, 2022`)
 - relative to the other bound (ex: `6 days BEFORE 1 September 2022`)
 - relative to now (ex: `1 may 1992 TO today`)
+
+Combining the 3 types for left and right bound we can specify a window in 9 ways.
 
 Keywords allowed before every type:
 
@@ -51,7 +63,7 @@ Keywords allowed before every type:
   </tr>
 </table>
 
-Combining these types we can specify a window in handful of ways:
+Combining these types we can specify a window in 9 ways:
 <table>
     <thead>
     <tr>
@@ -65,25 +77,25 @@ Combining these types we can specify a window in handful of ways:
         <td>Absolute</td>
         <td>Absolute</td>
         <td><code>FROM a TO b</code></td>
-        <td>FROM 1 January 1991 TO 31 December 1991</td>
+        <td>`FROM 1 January 1991 TO 31 December 1991`</td>
     </tr>
     <tr>
         <td>Absolute</td>
         <td>Relative To Another Bound</td>
         <td><code>FROM a WITHIN b</code></td>
-        <td>FROM 1 January 1991 WITHIN 365 days</td>
+        <td>`FROM 1 January 1991 WITHIN 365 days`</td>
     </tr>
     <tr>
         <td>Absolute</td>
         <td>Relative To Now</td>
         <td><code>FROM a UNTIL b</code></td>
-        <td>FROM 1 January 1991 UNTIL last week</td>
+        <td>`FROM 1 January 1991 UNTIL last week`</td>
     </tr>
     <tr>
         <td>Relative To Another Bound</td>
         <td>Absolute</td>
         <td><code>WITHIN a BEFORE b</code></td>
-        <td>WITHIN 365 days BEFORE 31 December 1991</td>
+        <td>`WITHIN 365 days BEFORE 31 December 1991`</td>
     </tr>
     <tr>
         <td>Relative To Another Bound</td>
@@ -98,25 +110,25 @@ Combining these types we can specify a window in handful of ways:
         <td>Relative To Another Bound</td>
         <td>Relative To Now</td>
         <td><code>WITHIN a UNTIL b</code></td>
-        <td>WITHIN 7 days UNTIL yesterday</td>
+        <td>`WITHIN 7 days UNTIL yesterday`</td>
     </tr>
     <tr>
         <td>Relative To Now</td>
         <td>Absolute</td>
         <td><code>FROM a TO b</code></td>
-        <td>FROM 7 years ago TO 31 December 1991</td>
+        <td>`FROM 7 years ago TO 31 December 1991`</td>
     </tr>
     <tr>
         <td>Relative To Now</td>
         <td>Relative To Another Bound</td>
         <td><code>FROM a UNTIL b</code></td>
-        <td>FROM 7 years ago UNTIL last week</td>
+        <td>`FROM 7 years ago UNTIL last week`</td>
     </tr>
     <tr>
         <td>Relative To Now</td>
         <td>Relative To Now</td>
         <td><code>FROM a TO b</code></td>
-        <td>FROM last year TO this year</td>
+        <td>`FROM last year TO this year`</td>
     </tr>
 </table>
 

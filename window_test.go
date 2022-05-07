@@ -78,6 +78,11 @@ func Test(t *testing.T) {
 			d2 := dateparse.MustParse("4 Jan 2024 01:59:59.999999999")
 			return Window{from: &d1, to: &d2}
 		}},
+		{"today within 1 minute", func() Window {
+			d1 := dateparse.MustParse("1 May 2022 23:59:59.999999999")
+			d2 := dateparse.MustParse("2 May 2022 00:00:59.999999999")
+			return Window{from: &d1, to: &d2}
+		}},
 		// 9. RelN-RelN
 		{"last hour to next minute", func() Window {
 			d1 := dateparse.MustParse("30 Apr 2022 23:59:59.999999999")
