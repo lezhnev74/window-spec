@@ -55,7 +55,7 @@ func main() {
 	fmt.Printf("Window resolved at:\t%s\n", now.Format("2006-01-02, 15:04:05.000000000 MST"))
 
 	if win.GetSlide() != 0 {
-		fmt.Printf("You defined a sliding window of %s", humanizeDuration(win.GetSlide()))
+		fmt.Printf("You defined a sliding window of %s\n", humanizeDuration(win.GetSlide()))
 	} else {
 		l, r := win.GetBounds()
 		fmt.Printf("Left Bound:\t\t%s\n", l.Format("2006-01-02, 15:04:05.000000000 MST"))
