@@ -180,7 +180,7 @@ func (r *Recognizer) parseRelBound() (d time.Duration, err error) {
 	if r.p.expect("and") {
 		curPos := r.p.pos
 		extraDuration, extraErr := r.parseRelBound()
-		if err != nil {
+		if extraErr != nil {
 			r.p.rollbackAt(curPos)
 			err = r.fail(extraErr.Error())
 			return

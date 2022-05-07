@@ -24,6 +24,7 @@ func Test_recognitionFail(t *testing.T) {
 		{"3 days max", "failed to recognize the right bound"},
 		{"1 April 2022 to", "failed to recognize the right bound"},
 		{"1 April 2022 to ", "failed to recognize the right bound"},
+		{"1 minute and 1 ", "failed to recognize the left bound"},
 	}
 
 	for i, tt := range tests {
