@@ -70,6 +70,10 @@ func Test_recognitionSuccess(t *testing.T) {
 			return MakeSpecification(d1, boundRelativeToNow{verbal: "now"})
 		}},
 		// 4. Rel-Abs
+		{"yesterday to 1 Apr 2022", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Apr 2022")
+			return MakeSpecification(boundRelativeToNow{verbal: "yesterday"}, d1)
+		}},
 		// 5. Rel-Rel (Sliding window)
 		{"3 days", func() Specification {
 			return MakeSpecification(3*24*time.Hour, nil)
@@ -91,7 +95,14 @@ func Test_recognitionSuccess(t *testing.T) {
 			)
 		}},
 		// 7. RelN-Abs
+		{"30 days to 1 Apr 2022", func() Specification {
+			d1, _ := dateparse.ParseStrict("1 Apr 2022")
+			return MakeSpecification(30*24*time.Hour, d1)
+		}},
 		// 8. RelN-Rel
+		{"yesterday within 30 days", func() Specification {
+			return MakeSpecification(boundRelativeToNow{verbal: "yesterday"}, 30*24*time.Hour)
+		}},
 		// 9. RelN-RelN
 		{"from last month until 2 hours later", func() Specification {
 			return MakeSpecification(

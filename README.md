@@ -3,6 +3,11 @@
 A window is a term from the time series domain. It is a period of time.
 This package allows to define windows in plain text and then convert them to Go structures.
 
+Examples:
+- `A`
+- `B`
+- `C`
+
 ## How To Define A Window
 
 A windows can be defined by its left and right bounds. `W: (a,b)`. Bounds are time points (as precise as we want). This

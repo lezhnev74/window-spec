@@ -69,7 +69,7 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 			return
 		}
 
-		r.p.expectAny([]string{"until", " to"})
+		r.p.expectAny([]string{"until", "to", "within"})
 		r.p.eatWs()
 
 		// Try 1: RelN spec
@@ -93,8 +93,8 @@ func (r *Recognizer) state(state int) (nextState int, err error) {
 		r.p.rollbackAt(oldPos)
 
 		// Try 3: anything else should be treated as Abs spec
-		rightBoundText, _ := r.p.consumeUntil([]string{" to", "until", "within"})
-		absTime, absErr := dateparse.ParseStrict(rightBoundText)
+		remainingText, _ := r.p.consumeUntil([]string{})
+		absTime, absErr := dateparse.ParseStrict(remainingText)
 		if absErr == nil {
 			r.spec.rightBoundAbs = &absTime
 			nextState = STATE_VALIDATE
