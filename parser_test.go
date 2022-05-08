@@ -20,7 +20,7 @@ func Test_consumeRE(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			p := StartParsing(tt.text)
+			p := startParsing(tt.text)
 			if r := p.consumeRE(tt.pattern); r != tt.result {
 				t.Errorf("unexpected result [%s] when expected [%s]", r, tt.result)
 			}
@@ -46,7 +46,7 @@ func Test_expect(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			p := StartParsing(tt.text)
+			p := startParsing(tt.text)
 			if r := p.expectAny(tt.alts); r != tt.result {
 				t.Errorf("unexpected result [%s] when expected [%s]", r, tt.result)
 			}
@@ -70,7 +70,7 @@ func Test_consumeUntil(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			p := StartParsing(tt.text)
+			p := startParsing(tt.text)
 			if consumed, matched := p.consumeUntil(tt.alts); consumed != tt.consumed || matched != tt.matched {
 				t.Errorf("unexpected result [%s, %s] when expected [%s,%s]", consumed, matched, tt.consumed, tt.matched)
 			}
@@ -92,7 +92,7 @@ func Test_eatWs(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			p := StartParsing(tt.text)
+			p := startParsing(tt.text)
 			p.eatWs()
 			if p.getRemainder() != tt.result {
 				t.Errorf("unexpected result [%s] when expected [%s]", p.getRemainder(), tt.result)

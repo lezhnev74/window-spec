@@ -137,7 +137,7 @@ func (r *Recognizer) fail(customMsg string) error {
 }
 
 func (r *Recognizer) mapDurationUnit(unit string) (d time.Duration, err error) {
-	d = MapUnitToDuration(unit)
+	d = mapUnitToDuration(unit)
 	if d == 0 {
 		err = fmt.Errorf("unsupported unit %s in relative bound", unit)
 	}
@@ -194,7 +194,7 @@ func (r *Recognizer) parseRelBound() (d time.Duration, err error) {
 // parseRelnBound checks that text contains relative specification like "next month" or an interval like "2 days ago"
 func (r *Recognizer) parseRelnBound() (bound boundRelativeToNow, err error) {
 	// check one-word onewords
-	verbalKeyword := r.p.expectAny(GetShortWords())
+	verbalKeyword := r.p.expectAny(getShortWords())
 	if verbalKeyword != "" {
 		bound.verbal = verbalKeyword
 		return
@@ -210,7 +210,7 @@ func (r *Recognizer) parseRelnBound() (bound boundRelativeToNow, err error) {
 		}
 
 		// check interval keywords
-		verbal := r.p.expectAny(GetPeriodWords())
+		verbal := r.p.expectAny(getPeriodWords())
 		if verbal != "" {
 			bound.inFuture = inFuture
 			bound.verbal = verbal
@@ -243,7 +243,7 @@ func (r *Recognizer) parseRelnBound() (bound boundRelativeToNow, err error) {
 }
 
 func Start(text string) (s Specification, e error) {
-	p := StartParsing(text)
+	p := startParsing(text)
 	r := &Recognizer{
 		p: p,
 	}

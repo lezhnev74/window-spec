@@ -10,7 +10,7 @@ type Parser struct {
 	pos  int
 }
 
-func StartParsing(text string) *Parser {
+func startParsing(text string) *Parser {
 	return &Parser{
 		text: strings.ToLower(text),
 	}

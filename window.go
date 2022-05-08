@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func MapUnitToDuration(unit string) (d time.Duration) {
+func mapUnitToDuration(unit string) (d time.Duration) {
 	switch unit {
 	case "nanosecond", "nanoseconds":
 		d = time.Nanosecond
@@ -27,9 +27,9 @@ func MapUnitToDuration(unit string) (d time.Duration) {
 	return d
 }
 
-// GetPeriodWords returns a list of possible predefined words that can be used in the bound definition relative to now
+// getPeriodWords returns a list of possible predefined words that can be used in the bound definition relative to now
 // ex: "last X" or "next Y"
-func GetPeriodWords() []string {
+func getPeriodWords() []string {
 	return []string{
 		"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 		"january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
@@ -38,8 +38,8 @@ func GetPeriodWords() []string {
 	}
 }
 
-// GetShortWords returns a list of possible predefined words that can be used in the bound definition relative to now as is
-func GetShortWords() []string {
+// getShortWords returns a list of possible predefined words that can be used in the bound definition relative to now as is
+func getShortWords() []string {
 	return []string{"today", "yesterday", "now", "tomorrow"}
 }
 
@@ -182,7 +182,7 @@ type Specification struct {
 	leftBoundRelN, rightBoundRelN *boundRelativeToNow // "2 days ago" or "last june"
 }
 
-func MakeSpecification(leftBound, rightBound any) Specification {
+func makeSpecification(leftBound, rightBound any) Specification {
 	s := Specification{}
 
 	switch v := leftBound.(type) {
